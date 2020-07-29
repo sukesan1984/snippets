@@ -14,7 +14,9 @@
 
 int	main()
 {
-	printf("%s\n", NULL);
-	printf("%s\n", "");
+	char	buf[4000];
+
+	snprintf(buf, 4000, "hoge %d\n", 100);
+	printf("%s", buf);
 	return (0);
 }
