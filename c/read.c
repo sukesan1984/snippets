@@ -13,16 +13,27 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main()
 {
 	int		fd;
 	size_t	size;
-	char	buf[10];
+	//char	buf[10];
+	char	*buf;
+	int		i;
 
-	fd = open("emptyfile", O_RDONLY);
+	buf = calloc(10, sizeof(char));
+	fd = open("test", O_RDONLY);
 	size = read(fd, buf, 10);
+	i = 0;
 	printf("%ld\n", size);
+	while (i < 10)
+	{
+		printf("i: %d, ascii: %d, char: %c\n", i, buf[i], buf[i]);
+		i++;
+	}
+	//printf("%ld\n", size);
 
 	return (0);
 }
