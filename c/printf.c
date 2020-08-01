@@ -21,6 +21,7 @@ int	main()
 	snprintf(buf, 4000, "hoge %d\n", 100);
 	printf("%s", buf);
 	printf("%2$d, %3$s, %1$d\n", 1, 2, "hoge");
+	printf("%2$d, %3$s, %4$d, %1$d, %1$d\n", 1, 2, "hoge", 4);
 
 	short_str = malloc(10 * sizeof(char));
 	snprintf(short_str, 12, "abcdefghijklmn");
