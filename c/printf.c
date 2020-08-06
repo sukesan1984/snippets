@@ -93,7 +93,11 @@ int	main()
 	printf("double: %%#A: %#A\n", b);
 	printf("double: %%-Ahoge: %-Ahoge\n", b);
 	printf("double: %%-50Ahoge: %-50Ahoge\n", b);
+
+	// eE
 	printf("double:  %%e: %e\n", a);
+	printf("double:  %%.10e: %.10e\n", 123.456);
+	printf("double:  %%.0e: %.0e\n", 123.456);
 	printf("double: %%#e: %#e\n", b);
 	printf("double: %%-ehoge: %-ehoge\n", b);
 	printf("double: %%-50ehoge: %-50ehoge\n", b);
@@ -102,6 +106,7 @@ int	main()
 	printf("double: %%-Ehoge: %-Ehoge\n", b);
 	printf("double: %%-50Ehoge: %-50Ehoge\n", b);
 	printf("double:  %%f: %f\n", a);
+
 	printf("double: %%#f: %#f\n", b);
 	printf("double: %%-fhoge: %-fhoge\n", b);
 	printf("double: %%-50fhoge: %-50fhoge\n", b);
@@ -109,6 +114,7 @@ int	main()
 	printf("double: %%#F: %#F\n", b);
 	printf("double: %%-F: %-Fhoge\n", b);
 	printf("double: %%-50Fhoge: %-50Fhoge\n", b);
+
 	printf("double : %%g: %g\n", a);
 	printf("double: %%#g: %#g\n", b);
 	printf("double: %%-g: %-ghoge\n", b);
@@ -117,6 +123,56 @@ int	main()
 	printf("double: %%#G: %#G\n", b);
 	printf("double: %%-G: %-Ghoge\n", b);
 	printf("double: %%-50G: %-50Ghoge\n", b);
+
+	printf("%%g: %g\n", 0.123456789);
+	printf("%%g: %g\n", 1.23456789);
+	printf("%%g: %g\n", 123.456789);
+	printf("%%g: %g\n", 123456.789);
+	printf("%%.1g: %.1g\n", 123456789.0);
+	printf("%%.5g: %.5g\n", 123456789.0);
+	printf("%%.6g: %.6g\n", 123456789.0);
+	printf("%%.7g: %.7g\n", 123456789.0);
+	printf("%%.9g: %.9g\n", 123456789.0);
+	printf("%%.10g: %.10g\n", 123456789.0);
+	printf("%%.11g: %.11g\n", 123456789.0);
+	printf("%%.15g: %.15g\n", 123456789.0);
+	printf("%%.1g: %.1g\n", 0.00000123456789);
+	printf("%%.5g: %.5g\n", 0.00000123456789);
+	printf("%%.6g: %.6g\n", 0.00000123456789);
+	printf("%%.7g: %.7g\n", 0.00000123456789);
+	printf("%%.9g: %.9g\n", 0.00000123456789);
+
+
+	printf("%%.4g: %.4g\n", 123456789.0);
+	printf("%%.4g: %.4g\n", 12345678.9);
+	printf("%%.4g: %.4g\n", 1234567.89);
+	printf("%%.4g: %.4g\n", 123456.789);
+	printf("%%.4g: %.4g\n", 12345.6789);
+	printf("%%.4g: %.4g\n", 1234.56789);
+	printf("%%.4g: %.4g\n", 123.456789);
+	printf("%%.4g: %.4g\n", 12.3456789);
+	printf("%%.4g: %.4g\n", 1.23456789);
+	printf("%%.4g: %.4g\n", 0.123456789);
+	printf("%%.4g: %.4g\n", 0.0123456789);
+	printf("%%.4g: %.4g\n", 0.00123456789);
+	printf("%%.4g: %.4g\n", 0.000123456789);
+	printf("%%.4g: %.4g\n", 0.0000123456789);
+	printf("%%.4g: %.4g\n", 0.00000123456789);
+	printf("%%.5g: %.5g\n", 123456789.0);
+	printf("%%.5g: %.5g\n", 12345678.9);
+	printf("%%.5g: %.5g\n", 1234567.89);
+	printf("%%.5g: %.5g\n", 123456.789);
+	printf("%%.5g: %.5g\n", 12345.6789);
+	printf("%%.5g: %.5g\n", 1234.56789);
+	printf("%%.5g: %.5g\n", 123.456789);
+	printf("%%.5g: %.5g\n", 12.3456789);
+	printf("%%.5g: %.5g\n", 1.23456789);
+	printf("%%.5g: %.5g\n", 0.123456789);
+	printf("%%.5g: %.5g\n", 0.0123456789);
+	printf("%%.5g: %.5g\n", 0.00123456789);
+	printf("%%.5g: %.5g\n", 0.000123456789);
+	printf("%%.5g: %.5g\n", 0.0000123456789);
+	printf("%%.5g: %.5g\n", 0.00000123456789);
 
 	return (0);
 }
