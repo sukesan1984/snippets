@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package pb;
+
+service HelloService {
+    rpc Hello (HelloRequest) returns (HelloResponse);
+    rpc TellMeSecret (TellMeSecretRequest) returns (TellMeSecretResponse);
+}
+
+message HelloRequest {
+    string message = 1;
+}
+
+message HelloResponse {
+    string answer = 1;
+}
+
+message TellMeSecretRequest {
+    string message = 1;
+}
+
+message TellMeSecretResponse {
+    string answer = 1;
+}
