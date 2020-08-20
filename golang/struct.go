@@ -15,4 +15,12 @@ func main() {
 	t2.Name = "Foo"
 	t2.Age = 40
 	fmt.Println([]Test{t1, t2})
+
+	t3 := Test{Name: "hoge", Age: 10}
+	t4 := Test{Name: "hoge", Age: 10}
+	if (t3 == t4) {
+		fmt.Println("same")
+	} else {
+		fmt.Println("different")
+	}
 }
