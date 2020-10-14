@@ -51,19 +51,36 @@ t_bit96	sub96(t_bit96 s, t_bit96 d)
 	return (new);
 }
 
+t_bit96	lsr96(t_bit96 s)
+{
+	t_bit96	new;
+
+	new.s0 = (s.s0 >> 1) | ((s.s1 & 1) << 31);
+	new.s1 = (s.s1 >> 1) | ((s.s2 & 1) << 31);
+	new.s2 = (s.s2 >> 1);
+	return (new);
+}
+
+t_bit96	lsl96(t_bit96 s)
+{
+	t_bit96	new;
+
+	new.s0 = (s.s0 << 1);
+	new.s1 = (s.s1 << 1) | ((s.s0 & 0x80000000) >> 31);
+	new.s2 = (s.s2 << 1) | ((s.s1 & 0x80000000) >> 31);
+	return (new);
+}
+
 int		main(void)
 {
-	t_bit96	a;
-	t_bit96	b;
 	t_bit96	c;
 
-	a.s2 = 0;
-	a.s1 = 13;
-	a.s0 = 0;
-	b.s2 = 0;
-	b.s1 = 12;
-	b.s0 = 0;
-	c = sub96(a, b);
-	printf("%d, %d, %d\n", c.s2, c.s1, c.s0);
+	c.s0 = 0;
+	c.s1 = 0;
+	c.s2 = 0xffffffff;
+	c = lsr96(c);
+	printf("%#x, %#x, %#x\n", c.s2, c.s1, c.s0);
+	c = lsl96(c);
+	printf("%#x, %#x, %#x\n", c.s2, c.s1, c.s0);
 	return (0);
 }
