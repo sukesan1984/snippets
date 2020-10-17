@@ -26,4 +26,8 @@ typedef struct	s_prep_number {
 	uint64_t	mantissa;
 }				t_prep_number;
 
+typedef union	u_hex_double {
+	double		d;
+	uint64_t	u;
+}				t_hex_double;
 #endif

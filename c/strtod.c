@@ -286,27 +286,144 @@ static int	parse(char *str, t_prep_number *pn)
 	return (result);
 }
 
-void	test_parse(char *str)
+static double converter(t_prep_number *pn)
+{
+	int				binexp;
+	uint64_t		binexs2;
+	t_hex_double	hd;
+	t_bit96			s;
+	t_bit96			q;
+	t_bit96			r;
+	uint32_t		mask28;
+
+	binexp = 92;
+	mask28 = 0xF << 28;
+	// sign, exp, mantissa
+	// mantissa to 96bit
+	s.s2 = 0;
+	s.s1 = (uint32_t)(pn->mantissa >> 32);
+	s.s0 = (uint32_t)(pn->mantissa & 0xffffffff);
+	while (pn->exponent > 0)
+	{
+		// mantissa * 10 = mantissa * (2 + 2^3)
+		q = lsl96(s); // mantissa << 1
+		r = lsl96(q); // mantissa << 2
+		s = lsl96(r); // mantissa << 3
+		s = add96(s, q); // mantissa * (2 + 2^3)
+		pn->exponent--;
+
+		while (s.s2 & mask28)
+		{
+			binexp++;
+			s = lsr96(s);
+		}
+	}
+
+	while (pn->exponent < 0)
+	{
+		while (!(s.s2 & (1 << 31)))
+		{
+			s = lsl96(s);
+			binexp--;
+		}
+		q.s2 = s.s2 / 10;
+		r.s1 = s.s2 % 10;
+		r.s2 = (r.s1 << 24) | (s.s1 >> 8);
+		q.s1 = r.s2 / 10;
+		r.s1 = r.s2 % 10;
+		r.s2 = (r.s1 << 24) | ((s.s1 & 0xFF) << 16) | (s.s0 >> 16);
+		r.s0 = r.s2 / 10;
+		r.s1 = r.s2 % 10;
+		q.s0 = ((r.s1 << 16)| (s.s0 & 0xFFFF)) / 10 | (r.s0 << 16);
+		q.s1 = ((r.s0 & 0x00FF0000) >> 16) | (q.s1 << 8);
+		s.s2 = q.s2;
+		s.s1 = q.s1;
+		s.s0 = q.s0;
+
+		pn->exponent++;
+	}
+
+	if (s.s2 || s.s1 || s.s0)
+	{
+		while (!(s.s2 & mask28))
+		{
+			s = lsl96(s);
+			binexp--;
+		}
+	}
+	binexp += 1023;
+	//printf("binexp: %d\n", binexp);
+	//printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
+
+	if (binexp > 2046)
+	{
+		if (pn->negative)
+			hd.u = DOUBLE_MINUS_INFINITY;
+		else
+			hd.u = DOUBLE_PLUS_INFINITY;
+	}
+	else if (binexp < 1)
+	{
+		if (pn->negative)
+			hd.u = DOUBLE_MINUS_ZERO;
+	}
+	else if (s.s2)
+	{
+		binexs2 = (uint64_t)binexp;
+		hd.u = (binexs2 << 52) | ((uint64_t)(s.s2 & ~mask28) << 24) | ((uint64_t)(s.s1 + 128)  >> 8);
+		if (pn->negative)
+			hd.u |= (1ULL << 63);
+	}
+
+	//printf("encoded: %#llx\n", hd.u);
+	return hd.d;
+}
+
+double	ft_strtod(char *s)
+{
+	t_prep_number	*pn;
+	t_hex_double	hd;
+	int				i;
+	double			result;
+
+	hd.u = DOUBLE_PLUS_ZERO;
+	pn = calloc(1, sizeof(t_prep_number));
+	i = parse(s, pn);
+	if (i == PARSER_OK)
+		result = converter(pn);
+	else if (i == PARSER_PZERO)
+		result = hd.d;
+	else if (i == PARSER_MZERO)
+		result = DOUBLE_MINUS_ZERO;
+	else if (i == PARSER_PINF)
+		result = DOUBLE_PLUS_INFINITY;
+	else if (i == PARSER_MINF)
+		result = DOUBLE_MINUS_INFINITY;
+	return (result);
+}
+
+void	test(char *str)
 {
 	int				result;
 	t_prep_number	*pn;
 
-	printf("%s\n", str);
-	pn = calloc(1, sizeof(t_prep_number));
-	result = parse(str, pn);
-	if (result == PARSER_MZERO)
-		printf("result: -0\n");
-	else if (result == PARSER_PZERO)
-		printf("result: +0\n");
-	else if (result == PARSER_MINF)
-		printf("result: -inf\n");
-	else if (result == PARSER_PINF)
-		printf("result: +inf\n");
-	else
-	{
-		printf("result: OK\n");
-		printf("negative: %d, exponent: %d, mantissa: %lld(%#llx)\n", pn->negative, pn->exponent, pn->mantissa, pn->mantissa);
-	}
+	printf("input : %s\n", str);
+	//pn = calloc(1, sizeof(t_prep_number));
+	//result = parse(str, pn);
+	//if (result == PARSER_MZERO)
+	//	printf("result: -0\n");
+	//else if (result == PARSER_PZERO)
+	//	printf("result: +0\n");
+	//else if (result == PARSER_MINF)
+	//	printf("result: -inf\n");
+	//else if (result == PARSER_PINF)
+	//	printf("result: +inf\n");
+	//else
+	//{
+	//	printf("result: OK\n");
+	//	printf("negative: %d, exponent: %d, mantissa: %lld(%#llx)\n", pn->negative, pn->exponent, pn->mantissa, pn->mantissa);
+	//}
+	printf("output: %1.16g\n",ft_strtod(str));
 }
 
 int		main(void)
@@ -323,21 +440,21 @@ int		main(void)
 	c = lsl96(c);
 	printf("%#x, %#x, %#x\n", c.s2, c.s1, c.s0);
 
-	test_parse("0.00000123456");
-	test_parse("0.123456");
-	test_parse("1.23456");
-	test_parse("12.3456");
-	test_parse("123.456");
-	test_parse("-0.123456");
-	test_parse("-1.23456");
-	test_parse("-12.3456");
-	test_parse("-123.456");
-	test_parse("-123.456e12");
-	test_parse("123.456e13");
-	test_parse("0.00000123456e-123");
-	test_parse("1.7976931348623157e308");
-	test_parse("4.9406564584124654e-324");
-	test_parse("2.2250738585072014e-308");
-	test_parse("2.2250738585072001e-308");
+	test("0.00000123456");
+	test("0.123456");
+	test("1.23456");
+	test("12.3456");
+	test("123.456");
+	test("-0.123456");
+	test("-1.23456");
+	test("-12.3456");
+	test("-123.456");
+	test("-123.456e12");
+	test("123.456e13");
+	test("0.00000123456e-123");
+	test("1.7976931348623157e308");
+	test("4.9406564584124654e-324");
+	test("2.2250738585072014e-308");
+	test("2.2250738585072001e-308");
 	return (0);
 }
