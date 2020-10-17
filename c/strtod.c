@@ -423,7 +423,8 @@ void	test(char *str)
 	//	printf("result: OK\n");
 	//	printf("negative: %d, exponent: %d, mantissa: %lld(%#llx)\n", pn->negative, pn->exponent, pn->mantissa, pn->mantissa);
 	//}
-	printf("output: %1.16g\n",ft_strtod(str));
+	printf("my  output: %1.17g\n", ft_strtod(str));
+	printf("lib output: %1.17g\n", strtod(str, NULL));
 }
 
 int		main(void)
@@ -451,6 +452,7 @@ int		main(void)
 	test("-123.456");
 	test("-123.456e12");
 	test("123.456e13");
+	test("18014398509482012");
 	test("0.00000123456e-123");
 	test("1.7976931348623157e308");
 	test("4.9406564584124654e-324");
