@@ -296,9 +296,12 @@ static double converter(t_prep_number *pn)
 	t_bit96			r;
 	uint64_t		t;
 	uint32_t		mask28;
+	uint32_t		mask29;
+	int				bit;
 
 	binexp = 92;
 	mask28 = 0xF << 28;
+	mask29 = 0xE << 28;
 	// sign, exp, mantissa
 	// mantissa to 96bit
 	s.s2 = 0;
@@ -353,8 +356,8 @@ static double converter(t_prep_number *pn)
 		}
 	}
 	binexp += 1023;
-	//printf("binexp: %d\n", binexp);
-	//printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
+	printf("binexp: %d\n", binexp);
+	printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
 
 	if (binexp > 2046)
 	{
@@ -363,33 +366,93 @@ static double converter(t_prep_number *pn)
 		else
 			hd.u = DOUBLE_PLUS_INFINITY;
 	}
-	else if (binexp < 1)
+	else if (binexp < -52)
 	{
 		if (pn->negative)
 			hd.u = DOUBLE_MINUS_ZERO;
+	}
+	// 非正規化数
+	else if (binexp >= -52 && binexp < 1)
+	{
+		printf("denormalize number: binexp : %d\n", binexp);
+		//printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
+		hd.u = 0;
+		if (binexp > -23)
+		{
+			bit = 8 - binexp;
+			if (s.s1 & (1 << bit) && (!(s.s1 & ((1 << bit) - 1)) && !(s.s0)))
+			{
+				if (s.s1 & 1 << (bit + 1))
+					t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
+				else
+					t = s.s1; // すでに最下位ビットが0
+			}
+			else if (!(s.s1 & (1 << bit)))
+				t = s.s1;
+			else
+				t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
+			hd.u = ((uint64_t)(s.s2 & ~mask29) << (24 - (1 - binexp))) | ((uint64_t)t >> (bit + 1));
+		}
+		else if (binexp == -23)
+		{
+			if (s.s1 & (1 << 31) && !(s.s1 & ((uint32_t)(1 << 31) - 1)) && !s.s0)
+			{
+				if (s.s2 & 1)
+					t = s.s2 + 1;
+				else
+					t = s.s2;
+			}
+			else if (!(s.s1 & (1 << 31)))
+				t = s.s2;
+			else
+				t = s.s2 + 1;
+			hd.u = t;
+			if (pn->negative)
+				hd.u |= (1ULL << 63);
+		}
+		else
+		{
+			bit = -24 - binexp;
+			if (s.s2 & (1 << bit) && (!(s.s2 & ((1 << bit) - 1)) && !(s.s1) && !(s.s0)))
+			{
+				if ((s.s2 >> (bit + 1)) & 1)
+					t = (s.s2 >> (bit + 1)) + 1; // 偶数方向に1足す
+				else
+					t = (s.s2 >> (bit + 1)); // すでに最下位ビットが0
+			}
+			else if (!(s.s2 & (1 << bit))) // 0x10000000のビットが立ってない時は切り捨てればよい
+				t = (s.s2 >> (bit + 1));
+			// 下位40ビットが0x10000000 00000000000000000000000000000000より大きい場合s2のビットを一つ大きくする
+			else
+				t = (s.s2 >> (bit + 1)) + 1;
+			hd.u = t;
+		}
+		if (pn->negative)
+			hd.u |= (1ULL << 63);
 	}
 	else if (s.s2)
 	{
 		binexs2 = (uint64_t)binexp;
 		// 完全に等しい時
-		if (s.s1 & 0x00000080 && (!(s.s1 & 0x0000007f) && !(s.s0)))
+		bit = 7;
+		if (s.s1 & (1 << bit) && (!(s.s1 & ((1 << bit) - 1)) && !(s.s0)))
 		{
-			if ((s.s1 >> 8) & 1)
-				t = (s.s1 >> 8) + 1; // 偶数方向に1足す
+			if ((s.s1 >> (bit + 1)) & 1)
+				t = (s.s1 >> (bit + 1)) + 1; // 偶数方向に1足す
 			else
-				t = (s.s1 >> 8); // すでに最下位ビットが0
+				t = (s.s1 >> (bit + 1)); // すでに最下位ビットが0
 		}
-		else if (!(s.s1 & 0x00000080)) // 0x10000000のビットが立ってない時は切り捨てればよい
-			t = (s.s1 >> 8);
+		else if (!(s.s1 & (1 << bit))) // 0x10000000のビットが立ってない時は切り捨てればよい
+			t = (s.s1 >> (bit + 1));
 		// 下位40ビットが0x10000000 00000000000000000000000000000000より大きい場合s1のビットを一つ大きくする
 		else
-			t = (s.s1 >> 8) + 1;
+			t = (s.s1 >> (bit + 1)) + 1;
 		hd.u = (binexs2 << 52) | ((uint64_t)(s.s2 & ~mask28) << 24) | t;
 		if (pn->negative)
 			hd.u |= (1ULL << 63);
 	}
 
-	//printf("encoded: %#llx\n", hd.u);
+	printf("encoded: %#.16llx\n", hd.u);
 	return hd.d;
 }
 
@@ -448,6 +511,27 @@ void	test(char *str)
 		printf("\033[1;31m");
 		printf("[ng]: my: %1.17g, lib: %1.17g\n", ft_strtod(str), strtod(str, NULL));
 		printf("\033[0m");
+	}
+}
+
+void	test_denormalize(void)
+{
+	char				*str;
+	uint64_t			init;
+	t_hex_double		hd;
+	int					i;
+
+	printf("test denormalize\n");
+	init = 0x0000000000000001ULL;
+	i = 0;
+	while (i <= 51)
+	{
+		hd.u = init << i;
+		printf("%1.17g\n", hd.d);
+		printf("%#.16llx\n", hd.u);
+		asprintf(&str, "%1.17g\n", hd.d);
+		test(str);
+		i++;
 	}
 }
 
@@ -515,8 +599,13 @@ int		main(void)
 	test("2251799813685249");
 	test("0.00000123456e-123");
 	test("1.7976931348623157e308");
-	test("4.9406564584124654e-324");
 	test("2.2250738585072014e-308");
 	test("2.2250738585072001e-308");
+	test("2.2250738585072008e-308");
+	test("9.8813129168249308e-324");
+	test("4.9406564584124654e-324");
+
+	test_denormalize();
+
 	return (0);
 }
