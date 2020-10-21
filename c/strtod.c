@@ -81,6 +81,16 @@ t_bit96	lsr96(t_bit96 s)
 	return (new);
 }
 
+t_bit96	lsr96_bit(t_bit96 s, int i)
+{
+	while (i > 0)
+	{
+		s = lsr96(s);
+		i--;
+	}
+	return (s);
+}
+
 t_bit96	lsl96(t_bit96 s)
 {
 	t_bit96	new;
@@ -89,6 +99,98 @@ t_bit96	lsl96(t_bit96 s)
 	new.s1 = (s.s1 << 1) | ((s.s0 & 0x80000000) >> 31);
 	new.s2 = (s.s2 << 1) | ((s.s1 & 0x80000000) >> 31);
 	return (new);
+}
+
+// bitの位置で偶数丸めする
+// 先頭から何ビット目以降を丸めるか?(bit)
+// s2: 0x1 0000000 (28ビット)
+// s1: 0x000000 00 (24 + 8ビット)
+// s0: 0x00000000 (32ビット)
+// 例えば、52ビットフルに使う場合丸めるの
+// 53ビット目 (s1の25ビット目以降) (bit = 53 + 8)
+// s1の下位8ビットが0x80より小さいか等しいか大きいかで分岐する
+// 0x80と等しい場合
+// もし、s1の24ビット目が1なら0x100を足す0なら下位8ビットを切り捨てる
+// 0x80より小さい場合
+// 切り捨て
+// 0x80より大きい場合
+// 0x100を足す
+// bit: 5bit - 57 bit
+t_bit96	round_ties_even(t_bit96 s, int bit)
+{
+	uint32_t	even;
+	uint32_t	mask;
+	uint32_t	min_bit;
+	t_bit96		add;
+
+	if (bit > 4 && bit <= 32)
+	{
+		even = 1 << (32 - bit);
+		min_bit = even << 1;
+		mask = min_bit - 1;
+		add.s0 = 0;
+		add.s1 = 0;
+		add.s2 = min_bit;
+		if (((s.s2 & mask) == even) && !s.s1 && !s.s0)
+		{
+			if (s.s2 & min_bit)
+			{
+				s.s2 &= ~mask;
+				s = add96(s, add);
+			}
+			else
+			{
+				s.s2 &= ~mask;
+				s.s1 = 0;
+				s.s0 = 0;
+			}
+		}
+		else if (s.s2 & even)
+		{
+			s.s2 &= ~mask;
+			s = add96(s, add);
+		}
+		else
+		{
+			s.s2 &= ~mask;
+			s.s1 = 0;
+			s.s0 = 0;
+		}
+	}
+	else
+	{
+		// 該当するビット
+		even = 1 << (32 - (bit - 32));
+		min_bit = even << 1;
+		mask = min_bit - 1;
+		add.s0 = 0;
+		add.s1 = min_bit;
+		add.s2 = 0;
+		if (((s.s1 & mask) == even)  && !s.s0)
+		{
+			if (s.s1 & min_bit)
+			{
+				s.s1 &= ~mask;
+				s = add96(s, add);
+			}
+			else
+			{
+				s.s1 &= ~mask;
+				s.s0 = 0;
+			}
+		}
+		else if (s.s1 & even) // 大きいとき
+		{
+			s.s1 &= ~mask;
+			s = add96(s, add);
+		}
+		else
+		{
+			s.s1 &= ~mask;
+			s.s0 = 0;
+		}
+	}
+	return (s);
 }
 
 char*			skip_white_space(char *str, int *state)
@@ -297,11 +399,13 @@ static double converter(t_prep_number *pn)
 	uint64_t		t;
 	uint32_t		mask28;
 	uint32_t		mask29;
+	uint32_t		mask20;
 	int				bit;
 
 	binexp = 92;
 	mask28 = 0xF << 28;
 	mask29 = 0xE << 28;
+	mask20 = 0xFFF << 20;
 	// sign, exp, mantissa
 	// mantissa to 96bit
 	s.s2 = 0;
@@ -356,8 +460,8 @@ static double converter(t_prep_number *pn)
 		}
 	}
 	binexp += 1023;
-	printf("binexp: %d\n", binexp);
-	printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
+	//printf("binexp: %d\n", binexp);
+	//printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
 
 	if (binexp > 2046)
 	{
@@ -374,59 +478,61 @@ static double converter(t_prep_number *pn)
 	// 非正規化数
 	else if (binexp >= -52 && binexp < 1)
 	{
-		printf("denormalize number: binexp : %d\n", binexp);
-		//printf("manttissa: %#x, %#x, %#x\n", s.s2, s.s1, s.s0);
 		hd.u = 0;
-		if (binexp > -23)
-		{
-			bit = 8 - binexp;
-			if (s.s1 & (1 << bit) && (!(s.s1 & ((1 << bit) - 1)) && !(s.s0)))
-			{
-				if (s.s1 & 1 << (bit + 1))
-					t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
-				else
-					t = s.s1; // すでに最下位ビットが0
-			}
-			else if (!(s.s1 & (1 << bit)))
-				t = s.s1;
-			else
-				t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
-			hd.u = ((uint64_t)(s.s2 & ~mask29) << (24 - (1 - binexp))) | ((uint64_t)t >> (bit + 1));
-		}
-		else if (binexp == -23)
-		{
-			if (s.s1 & (1 << 31) && !(s.s1 & ((uint32_t)(1 << 31) - 1)) && !s.s0)
-			{
-				if (s.s2 & 1)
-					t = s.s2 + 1;
-				else
-					t = s.s2;
-			}
-			else if (!(s.s1 & (1 << 31)))
-				t = s.s2;
-			else
-				t = s.s2 + 1;
-			hd.u = t;
-			if (pn->negative)
-				hd.u |= (1ULL << 63);
-		}
-		else
-		{
-			bit = -24 - binexp;
-			if (s.s2 & (1 << bit) && (!(s.s2 & ((1 << bit) - 1)) && !(s.s1) && !(s.s0)))
-			{
-				if ((s.s2 >> (bit + 1)) & 1)
-					t = (s.s2 >> (bit + 1)) + 1; // 偶数方向に1足す
-				else
-					t = (s.s2 >> (bit + 1)); // すでに最下位ビットが0
-			}
-			else if (!(s.s2 & (1 << bit))) // 0x10000000のビットが立ってない時は切り捨てればよい
-				t = (s.s2 >> (bit + 1));
-			// 下位40ビットが0x10000000 00000000000000000000000000000000より大きい場合s2のビットを一つ大きくする
-			else
-				t = (s.s2 >> (bit + 1)) + 1;
-			hd.u = t;
-		}
+		bit = binexp + 56;
+		s = round_ties_even(s, bit);
+		s = lsr96_bit(s, 64 - bit + 1);
+		hd.u = (uint64_t)s.s1 | ((uint64_t)(s.s2 & ~mask20) << 32);
+		//if (binexp > -23)
+		//{
+		//	bit = 8 - binexp;
+		//	if (s.s1 & (1 << bit) && (!(s.s1 & ((1 << bit) - 1)) && !(s.s0)))
+		//	{
+		//		if (s.s1 & 1 << (bit + 1))
+		//			t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
+		//		else
+		//			t = s.s1; // すでに最下位ビットが0
+		//	}
+		//	else if (!(s.s1 & (1 << bit)))
+		//		t = s.s1;
+		//	else
+		//		t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
+		//	hd.u = ((uint64_t)(s.s2 & ~mask29) << (24 - (1 - binexp))) | ((uint64_t)t >> (bit + 1));
+		//}
+		//else if (binexp == -23)
+		//{
+		//	if (s.s1 & (1 << 31) && !(s.s1 & ((uint32_t)(1 << 31) - 1)) && !s.s0)
+		//	{
+		//		if (s.s2 & 1)
+		//			t = s.s2 + 1;
+		//		else
+		//			t = s.s2;
+		//	}
+		//	else if (!(s.s1 & (1 << 31)))
+		//		t = s.s2;
+		//	else
+		//		t = s.s2 + 1;
+		//	hd.u = t;
+		//	if (pn->negative)
+		//		hd.u |= (1ULL << 63);
+		//}
+		//else
+		//{
+		//	bit = -24 - binexp;
+		//	if (s.s2 & (1 << bit) && (!(s.s2 & ((1 << bit) - 1)) && !(s.s1) && !(s.s0)))
+		//	{
+		//		if ((s.s2 >> (bit + 1)) & 1)
+		//			t = (s.s2 >> (bit + 1)) + 1; // 偶数方向に1足す
+		//		else
+		//			t = (s.s2 >> (bit + 1)); // すでに最下位ビットが0
+		//	}
+		//	else if (!(s.s2 & (1 << bit))) // 0x10000000のビットが立ってない時は切り捨てればよい
+		//		t = (s.s2 >> (bit + 1));
+		//	// 下位40ビットが0x10000000 00000000000000000000000000000000より大きい場合s2のビットを一つ大きくする
+		//	else
+		//		t = (s.s2 >> (bit + 1)) + 1;
+		//	hd.u = t;
+		//}
 		if (pn->negative)
 			hd.u |= (1ULL << 63);
 	}
@@ -452,7 +558,7 @@ static double converter(t_prep_number *pn)
 			hd.u |= (1ULL << 63);
 	}
 
-	printf("encoded: %#.16llx\n", hd.u);
+	//printf("encoded: %#.16llx\n", hd.u);
 	return hd.d;
 }
 
@@ -527,9 +633,9 @@ void	test_denormalize(void)
 	while (i <= 51)
 	{
 		hd.u = init << i;
-		printf("%1.17g\n", hd.d);
-		printf("%#.16llx\n", hd.u);
-		asprintf(&str, "%1.17g\n", hd.d);
+		//printf("%1.17g\n", hd.d);
+		//printf("lib encoded: %#.16llx\n", hd.u);
+		asprintf(&str, "%1.17g", hd.d);
 		test(str);
 		i++;
 	}
@@ -541,13 +647,13 @@ int		main(void)
 	int				result;
 	t_prep_number	pn;
 
+	c.s2 = 0x10000018;
+	c.s1 = 0x00000900;
 	c.s0 = 0;
-	c.s1 = 0;
-	c.s2 = 0xffffffff;
-	c = lsr96(c);
+
+	c = round_ties_even(c, 53);
 	printf("%#x, %#x, %#x\n", c.s2, c.s1, c.s0);
-	c = lsl96(c);
-	printf("%#x, %#x, %#x\n", c.s2, c.s1, c.s0);
+
 
 	test("0.00000123456");
 	test("0.123456");
