@@ -411,6 +411,7 @@ static double converter(t_prep_number *pn)
 	s.s2 = 0;
 	s.s1 = (uint32_t)(pn->mantissa >> 32);
 	s.s0 = (uint32_t)(pn->mantissa & 0xffffffff);
+	hd.u = DOUBLE_PLUS_ZERO;
 	while (pn->exponent > 0)
 	{
 		// mantissa * 10 = mantissa * (2 + 2^3)
@@ -508,7 +509,6 @@ static double converter(t_prep_number *pn)
 			hd.u |= (1ULL << 63);
 	}
 
-	//printf("encoded: %#.16llx\n", hd.u);
 	return hd.d;
 }
 
@@ -541,25 +541,10 @@ void	test(char *str)
 	t_prep_number	*pn;
 
 	printf("input : %s\n", str);
-	//pn = calloc(1, sizeof(t_prep_number));
-	//result = parse(str, pn);
-	//if (result == PARSER_MZERO)
-	//	printf("result: -0\n");
-	//else if (result == PARSER_PZERO)
-	//	printf("result: +0\n");
-	//else if (result == PARSER_MINF)
-	//	printf("result: -inf\n");
-	//else if (result == PARSER_PINF)
-	//	printf("result: +inf\n");
-	//else
-	//{
-	//	printf("result: OK\n");
-	//	printf("negative: %d, exponent: %d, mantissa: %lld(%#llx)\n", pn->negative, pn->exponent, pn->mantissa, pn->mantissa);
-	//}
 	if (ft_strtod(str) == strtod(str, NULL))
 	{
 		printf("\033[0;32m");
-		printf("[ok]\n");
+		printf("[ok] %1.17g\n", ft_strtod(str));
 		printf("\033[0m");
 	}
 	else
@@ -583,8 +568,6 @@ void	test_denormalize(void)
 	while (i <= 51)
 	{
 		hd.u = init << i;
-		//printf("%1.17g\n", hd.d);
-		//printf("lib encoded: %#.16llx\n", hd.u);
 		asprintf(&str, "%1.17g", hd.d);
 		test(str);
 		i++;
@@ -660,8 +643,11 @@ int		main(void)
 	test("2.2250738585072008e-308");
 	test("9.8813129168249308e-324");
 	test("4.9406564584124654e-324");
+	test("4.9406564584124655e-324");
 
 	test_denormalize();
 
+	test("5e-324");
+	test("1.1e-325");
 	return (0);
 }
