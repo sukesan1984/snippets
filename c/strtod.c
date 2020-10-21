@@ -483,56 +483,6 @@ static double converter(t_prep_number *pn)
 		s = round_ties_even(s, bit);
 		s = lsr96_bit(s, 64 - bit + 1);
 		hd.u = (uint64_t)s.s1 | ((uint64_t)(s.s2 & ~mask20) << 32);
-		//if (binexp > -23)
-		//{
-		//	bit = 8 - binexp;
-		//	if (s.s1 & (1 << bit) && (!(s.s1 & ((1 << bit) - 1)) && !(s.s0)))
-		//	{
-		//		if (s.s1 & 1 << (bit + 1))
-		//			t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
-		//		else
-		//			t = s.s1; // すでに最下位ビットが0
-		//	}
-		//	else if (!(s.s1 & (1 << bit)))
-		//		t = s.s1;
-		//	else
-		//		t = s.s1 + (1 << (bit + 1)); // 偶数方向に1足す
-		//	hd.u = ((uint64_t)(s.s2 & ~mask29) << (24 - (1 - binexp))) | ((uint64_t)t >> (bit + 1));
-		//}
-		//else if (binexp == -23)
-		//{
-		//	if (s.s1 & (1 << 31) && !(s.s1 & ((uint32_t)(1 << 31) - 1)) && !s.s0)
-		//	{
-		//		if (s.s2 & 1)
-		//			t = s.s2 + 1;
-		//		else
-		//			t = s.s2;
-		//	}
-		//	else if (!(s.s1 & (1 << 31)))
-		//		t = s.s2;
-		//	else
-		//		t = s.s2 + 1;
-		//	hd.u = t;
-		//	if (pn->negative)
-		//		hd.u |= (1ULL << 63);
-		//}
-		//else
-		//{
-		//	bit = -24 - binexp;
-		//	if (s.s2 & (1 << bit) && (!(s.s2 & ((1 << bit) - 1)) && !(s.s1) && !(s.s0)))
-		//	{
-		//		if ((s.s2 >> (bit + 1)) & 1)
-		//			t = (s.s2 >> (bit + 1)) + 1; // 偶数方向に1足す
-		//		else
-		//			t = (s.s2 >> (bit + 1)); // すでに最下位ビットが0
-		//	}
-		//	else if (!(s.s2 & (1 << bit))) // 0x10000000のビットが立ってない時は切り捨てればよい
-		//		t = (s.s2 >> (bit + 1));
-		//	// 下位40ビットが0x10000000 00000000000000000000000000000000より大きい場合s2のビットを一つ大きくする
-		//	else
-		//		t = (s.s2 >> (bit + 1)) + 1;
-		//	hd.u = t;
-		//}
 		if (pn->negative)
 			hd.u |= (1ULL << 63);
 	}
