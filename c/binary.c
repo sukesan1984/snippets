@@ -6,7 +6,7 @@
 /*   By: ktakami <ktakami@student.42tokyo.jp>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/05 15:26:04 by ktakami           #+#    #+#             */
-/*   Updated: 2020/12/05 17:55:20 by ktakami          ###   ########.fr       */
+/*   Updated: 2020/12/05 18:17:20 by ktakami          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@
 
 typedef	struct	s_data
 {
-	int data;
-	int bytes;
+	unsigned int	data;
+	int		bytes;
 }		t_data;
 
 typedef struct	s_bmp
@@ -38,6 +38,7 @@ typedef struct	s_bmp
 	t_data	res_height;
 	t_data	pallet_size;
 	t_data	important_color;
+	t_data	**pixel_data;
 }		t_bmp;
 
 t_data	create_data(int data, int bytes)
@@ -49,27 +50,36 @@ t_data	create_data(int data, int bytes)
 	return (d);
 }
 
-t_bmp	initialize(int width, int height)
+t_bmp	*initialize(int width, int height)
 {
-	t_bmp	bmp_data;
+	t_bmp	*bmp_data;
+	t_data	**pixel_data;
+	int	i;
 
-	bmp_data.filetype = create_data(0x424d, 2);
-	bmp_data.filesize = create_data(width*4*height+54, 4);
-	bmp_data.prepared = create_data(0, 4);
-	//bmp_data.offset = create_data(62, 4);
-	bmp_data.offset = create_data(54, 4);
-	bmp_data.header = create_data(40, 4);
-	bmp_data.width	= create_data(width, 4);
-	bmp_data.height	= create_data(height, 4);
-	bmp_data.plane = create_data(1, 2);
-	bmp_data.color_bit = create_data(32, 2);
-	bmp_data.comptype = create_data(0, 4);
-	//bmp_data.img_size = create_data(0x40, 4);
-	bmp_data.img_size = create_data(width*4*height, 4);
-	bmp_data.res_width = create_data(0, 4);
-	bmp_data.res_height = create_data(0, 4);
-	bmp_data.pallet_size = create_data(0, 4);
-	bmp_data.important_color = create_data(0, 4);
+	bmp_data = calloc(1, sizeof(t_bmp));
+	bmp_data->filetype = create_data(0x424d, 2);
+	bmp_data->filesize = create_data(width*4*height+54, 4);
+	bmp_data->prepared = create_data(0, 4);
+	bmp_data->offset = create_data(54, 4);
+	bmp_data->header = create_data(40, 4);
+	bmp_data->width	= create_data(width, 4);
+	bmp_data->height	= create_data(height, 4);
+	bmp_data->plane = create_data(1, 2);
+	bmp_data->color_bit = create_data(32, 2);
+	bmp_data->comptype = create_data(0, 4);
+	bmp_data->img_size = create_data(width*4*height, 4);
+	bmp_data->res_width = create_data(0, 4);
+	bmp_data->res_height = create_data(0, 4);
+	bmp_data->pallet_size = create_data(0, 4);
+	bmp_data->important_color = create_data(0, 4);
+	pixel_data = calloc(height, sizeof(t_data*));
+	i = 0;
+	while (i < height)
+	{
+		pixel_data[i] = calloc(width, sizeof(t_data));
+		i++;
+	}
+	bmp_data->pixel_data = pixel_data;
 	return (bmp_data);
 }
 
@@ -127,23 +137,35 @@ void	write_t_data(int fd, t_data d)
 	write_data(fd, d.data, d.bytes);
 }
 
-void	write_bmp(int fd, t_bmp bmp)
+void	write_bmp(int fd, t_bmp *bmp)
 {
-	write_t_data(fd, bmp.filetype);
-	write_t_data(fd, bmp.filesize);
-	write_t_data(fd, bmp.prepared);
-	write_t_data(fd, bmp.offset);
-	write_t_data(fd, bmp.header);
-	write_t_data(fd, bmp.width);
-	write_t_data(fd, bmp.height);
-	write_t_data(fd, bmp.plane);
-	write_t_data(fd, bmp.color_bit);
-	write_t_data(fd, bmp.comptype);
-	write_t_data(fd, bmp.img_size);
-	write_t_data(fd, bmp.res_width);
-	write_t_data(fd, bmp.res_height);
-	write_t_data(fd, bmp.pallet_size);
-	write_t_data(fd, bmp.important_color);
+	write_t_data(fd, bmp->filetype);
+	write_t_data(fd, bmp->filesize);
+	write_t_data(fd, bmp->prepared);
+	write_t_data(fd, bmp->offset);
+	write_t_data(fd, bmp->header);
+	write_t_data(fd, bmp->width);
+	write_t_data(fd, bmp->height);
+	write_t_data(fd, bmp->plane);
+	write_t_data(fd, bmp->color_bit);
+	write_t_data(fd, bmp->comptype);
+	write_t_data(fd, bmp->img_size);
+	write_t_data(fd, bmp->res_width);
+	write_t_data(fd, bmp->res_height);
+	write_t_data(fd, bmp->pallet_size);
+	write_t_data(fd, bmp->important_color);
+	for (int i = bmp->height.data - 1; i >= 0; i--)
+	{
+		for (int j = 0; j < bmp->width.data; j++)
+		{
+			write_t_data(fd, bmp->pixel_data[i][j]);
+		}
+	}
+}
+
+void	set_pixel(int i, int j, t_bmp *bmp, unsigned int color)
+{
+	bmp->pixel_data[j][i] = create_data(color, 4);
 }
 
 int	main()
@@ -151,9 +173,9 @@ int	main()
 	int	width;
 	int	height;
 	char	*path;
-	char	*data;
+	//char	*data;
 	int	fd;
-	t_bmp	bmp;
+	t_bmp	*bmp;
 
 	path = "test.bmp";
         fd = open(path, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG);
@@ -167,23 +189,26 @@ int	main()
 	height = 32;
 
 	bmp = initialize(width, height);
-	write_bmp(fd, bmp);
+	//write_bmp(fd, bmp);
 	//write_data(fd, 0xffffff, 4);
 	//write_data(fd, 0x0, 4);
 	for (int j = 0; j < height; j++)
 	{
 		for (int i = 0; i < width; i++)
 		{
-			if (i == 1 || j == 1 || i == width - 2|| j == height - 2)
+			if (i == 1 || j == 1 || i == width - 2|| j == height - 5)
 			{
-				write_data(fd, 0x000ff00, 4);
+				//write_data(fd, 0x000ff00, 4);
+				set_pixel(i, j, bmp, 0x0000ff00);
 			}
 			else
 			{
-				write_data(fd, 0x00ffffff, 4);
+				//write_data(fd, 0x00ffffff, 4);
+				set_pixel(i, j, bmp, 0x00ffffff);
 			}
 		}
 	}
+	write_bmp(fd, bmp);
 	//write_data(fd, 0x0, 4);
 	//write_data(fd, 0x7ffe, 4);
 	//write_data(fd, 0x4002, 4);
