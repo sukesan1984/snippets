@@ -6,7 +6,7 @@
 /*   By: ktakami <ktakami@student.42tokyo.jp>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/05 15:26:04 by ktakami           #+#    #+#             */
-/*   Updated: 2020/12/05 18:17:20 by ktakami          ###   ########.fr       */
+/*   Updated: 2020/12/07 11:07:36 by ktakami          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ t_bmp	*initialize(int width, int height)
 	int	i;
 
 	bmp_data = calloc(1, sizeof(t_bmp));
-	bmp_data->filetype = create_data(0x424d, 2);
+	bmp_data->filetype = create_data(0x4d42, 2);
 	bmp_data->filesize = create_data(width*4*height+54, 4);
 	bmp_data->prepared = create_data(0, 4);
 	bmp_data->offset = create_data(54, 4);
@@ -109,11 +109,12 @@ int	get_bytes(int data)
 void	write_recursive(int fd, int data)
 {
 	char c;
-	if (data / 256)
-		write_recursive(fd, data / 256);
 	c = data % 256;
 	//printf("data: %d\n", c);
 	write(fd, &c, 1);
+
+	if (data / 256)
+		write_recursive(fd, data / 256);
 }
 
 void	write_data(int fd, int data, int bytes)
@@ -185,8 +186,8 @@ int	main()
 		exit(1);
 	}
 	//data = "## ファイルヘッダ ##\n42 4d\n7e 00 00 00\n00 00\n00 00\n3e 00 00 00\n## 情報ヘッダ ##\n28 00 00 00\n10 00 00 00\n10 00 00 00\n01 00\n01 00\n00 00 00 00\n40 00 00 00\n10 00 00 00\n10 00 00 00\n00 00 00 00\n00 00 00 00\n## パレットデータ ##\nff ff ff 00\n00 00 00 00\n\n00 00 00 00\n7f fe 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 00\n40 02 00 0040 02 00 00\n7f fe 00 00\n00 00 00 00";
-	width = 64;
-	height = 32;
+	width = 400;
+	height = 400;
 
 	bmp = initialize(width, height);
 	//write_bmp(fd, bmp);
@@ -208,6 +209,7 @@ int	main()
 			}
 		}
 	}
+	//write_data(fd, 400, 2);
 	write_bmp(fd, bmp);
 	//write_data(fd, 0x0, 4);
 	//write_data(fd, 0x7ffe, 4);
