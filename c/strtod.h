@@ -19,4 +19,15 @@ typedef struct	s_bit96 {
 	uint32_t	s1;
 	uint32_t	s0;
 }				t_bit96;
+
+typedef struct	s_prep_number {
+	int			negative;
+	int32_t		exponent;
+	uint64_t	mantissa;
+}				t_prep_number;
+
+typedef union	u_hex_double {
+	double		d;
+	uint64_t	u;
+}				t_hex_double;
 #endif
