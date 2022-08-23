@@ -1,0 +1,27 @@
+version: '3.7'
+services:
+  server:
+    build: ./server
+    image: grpc-server:latest
+    container_name: grpc-server
+    volumes:
+      - './server:/go/src/server'
+      - './pb:/go/src/pb'
+    expose:
+      - 50051
+    command:
+      - /go/src/server/bin/server
+  envoy:
+    image: envoyproxy/envoy:v1.13.1
+    volumes:
+      - './envoy:/etc/envoy'
+      - './pb:/etc/pb'
+    expose:
+      - 51051
+    ports:
+      - 51051:51051
+    links:
+      - server
+volumes:
+  data:
+    driver: 'local'
