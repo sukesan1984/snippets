@@ -5,6 +5,8 @@ services:
     image: grpc-server:latest
     container_name: grpc-server
     volumes:
+      - './go.mod:/go/src/go.mod'
+      - './go.sum:/go/src/go.sum'
       - './server:/go/src/server'
       - './pb:/go/src/pb'
     expose:

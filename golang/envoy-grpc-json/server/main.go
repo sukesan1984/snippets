@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net"
 
 	pb "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb"
@@ -13,14 +14,16 @@ const (
 	port = ":50051"
 )
 
-type server struct{}
-
-func (s *server) GetTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloReponse{Message: "Hello World"}, nil
+type server struct {
+	pb.UnimplementedGreeterServer
 }
 
-func (s *server) PostTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReponse, error) {
-	return &pb.HelloReponse{Message: "Hello " + in.Name}, nil
+func (s *server) GetTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
+	return &pb.HelloResponse{Message: "Hello World"}, nil
+}
+
+func (s *server) PostTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
+	return &pb.HelloResponse{Message: "Hello " + in.Name}, nil
 }
 
 func main() {
@@ -32,6 +35,6 @@ func main() {
 	pb.RegisterGreeterServer(s, &server{})
 	reflection.Register(s)
 	if err := s.Serve(lis); err != nil {
-		log.Faltaf("failed to serve: %v", err)
+		log.Fatalf("failed to serve: %v", err)
 	}
 }

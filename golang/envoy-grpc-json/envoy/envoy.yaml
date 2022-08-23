@@ -50,4 +50,4 @@ static_resources:
             address:
               socket_address:
                 address: grpc-server
-                port_value: 5005{1
+                port_value: 50051
