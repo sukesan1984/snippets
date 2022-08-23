@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	gw "github.com/sukesan1984/snippets/grpc-gateway/proto/golang"
+	gw "github.com/sukesan1984/snippets/golang/grpc-gateway/proto/golang"
 	"google.golang.org/grpc"
 )
 
