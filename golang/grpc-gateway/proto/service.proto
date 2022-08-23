@@ -1,0 +1,21 @@
+syntax = "proto3";
+package proto;
+import "google/api/annotations.proto";
+
+option go_package = "github.com/sukesan1984/snippets/golang/grpc-gateway/proto/golang";
+
+service SayHello {
+  rpc Echo(HelloRequest) returns (HelloResponse) {
+    option (google.api.http) = {
+	  get: "/echo"
+	};
+  }
+}
+
+message HelloRequest {
+  string userName = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
