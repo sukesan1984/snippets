@@ -8,6 +8,7 @@ import (
 	pb "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 const (
@@ -19,11 +20,53 @@ type server struct {
 }
 
 func (s *server) GetTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloResponse{Message: "Hello World"}, nil
+	return &pb.HelloResponse{
+		Message: "Hello World",
+		Orders: []*pb.Order{
+			{
+				Id: "order1",
+				Items: []*pb.Item{
+					{
+						Id:    "hoge",
+						Name:  "日本製 ガーゼハンドタオル スピードライ speedry (宅配) ひよこクラブ掲載 ガーゼタオル 表面ガーゼ地 裏面パイル地 ハンカチ ガーゼハンカチ タオルハンカチ 速乾軽量 薄手 赤ちゃん ベビー 無地(0103-0006-010111)",
+						Price: wrapperspb.Double(1),
+					},
+					{
+						Id: "fuga",
+					},
+				},
+			},
+			{
+				Id: "order2",
+				Items: []*pb.Item{
+					{Id: "hoge2"},
+					{Id: "fuga2"},
+				},
+			},
+		},
+	}, nil
 }
 
 func (s *server) PostTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloResponse{Message: "Hello " + in.Name}, nil
+	return &pb.HelloResponse{
+		Message: "Hello " + in.Name,
+		Orders: []*pb.Order{
+			{
+				Id: "order1",
+				Items: []*pb.Item{
+					{Id: "hoge"},
+					{Id: "fuga"},
+				},
+			},
+			{
+				Id: "order2",
+				Items: []*pb.Item{
+					{Id: "hoge2"},
+					{Id: "fuga2"},
+				},
+			},
+		},
+	}, nil
 }
 
 func main() {

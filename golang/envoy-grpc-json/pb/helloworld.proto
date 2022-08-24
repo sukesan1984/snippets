@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package helloworld;
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb";
 
@@ -21,8 +23,22 @@ service Greeter{
 
 message HelloRequest {
   string name = 1;
+  google.protobuf.Timestamp date = 2;
 }
 
 message HelloResponse {
   string message = 1;
+  repeated Order orders = 2;
+  int64 next_cursor = 3;
+}
+
+message Order {
+  string id = 1;
+  repeated Item items = 2;
+}
+
+message Item {
+  string id = 1;
+  string name = 2;
+  google.protobuf.DoubleValue price = 3;
 }
