@@ -69,6 +69,12 @@ func (s *server) PostTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	}, nil
 }
 
+func (s *server) GetInt(ctx context.Context, in *pb.IntRequest) (*wrapperspb.Int64Value, error) {
+	return &wrapperspb.Int64Value{
+		Value: in.Value,
+	}, nil
+}
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

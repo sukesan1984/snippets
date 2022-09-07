@@ -13,6 +13,13 @@ service Greeter{
 	  get: "/hello"
 	};
   }
+
+  rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
+    option (google.api.http) = {
+	  get: "/getint"
+	};
+  }
+
   rpc PostTest(HelloRequest) returns (HelloResponse) {
     option (google.api.http) = {
 	  post: "/hello"
@@ -24,6 +31,10 @@ service Greeter{
 message HelloRequest {
   string name = 1;
   google.protobuf.Timestamp date = 2;
+}
+
+message IntRequest {
+  int64 value = 1;
 }
 
 message HelloResponse {
