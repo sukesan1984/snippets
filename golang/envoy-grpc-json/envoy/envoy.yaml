@@ -31,7 +31,7 @@ static_resources:
               print_options:
                 add_whitespace: true
                 always_print_primitive_fields: true
-                always_print_enums_as_ints: false
+                always_print_enums_as_ints: true
                 preserve_proto_field_names: false
           - name: envoy.router
 

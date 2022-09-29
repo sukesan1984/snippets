@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package helloworld;
 import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -14,7 +15,8 @@ service Greeter{
 	};
   }
 
-  rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
+  //rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
+  rpc GetInt(IntRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
 	  get: "/getint"
 	};
@@ -28,6 +30,13 @@ service Greeter{
   }
 }
 
+enum Code {
+  SUCCESS = 0;
+  INVALID_ARGUMENTS = 1;
+  SERVER_ERROR = 2;
+  DUPLICATE_ANSWERED = 3;
+}
+
 message HelloRequest {
   string name = 1;
   google.protobuf.Timestamp date = 2;
@@ -35,6 +44,10 @@ message HelloRequest {
 
 message IntRequest {
   int64 value = 1;
+}
+
+message IntResponse {
+  Code value = 1;
 }
 
 message HelloResponse {

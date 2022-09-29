@@ -4,10 +4,10 @@ package pb
 
 import (
 	context "context"
+	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,7 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GreeterClient interface {
 	GetTest(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
-	GetInt(ctx context.Context, in *IntRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
+	//rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
+	GetInt(ctx context.Context, in *IntRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	PostTest(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
 }
 
@@ -41,8 +42,8 @@ func (c *greeterClient) GetTest(ctx context.Context, in *HelloRequest, opts ...g
 	return out, nil
 }
 
-func (c *greeterClient) GetInt(ctx context.Context, in *IntRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error) {
-	out := new(wrapperspb.Int64Value)
+func (c *greeterClient) GetInt(ctx context.Context, in *IntRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
+	out := new(httpbody.HttpBody)
 	err := c.cc.Invoke(ctx, "/helloworld.Greeter/GetInt", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,8 @@ func (c *greeterClient) PostTest(ctx context.Context, in *HelloRequest, opts ...
 // for forward compatibility
 type GreeterServer interface {
 	GetTest(context.Context, *HelloRequest) (*HelloResponse, error)
-	GetInt(context.Context, *IntRequest) (*wrapperspb.Int64Value, error)
+	//rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
+	GetInt(context.Context, *IntRequest) (*httpbody.HttpBody, error)
 	PostTest(context.Context, *HelloRequest) (*HelloResponse, error)
 	mustEmbedUnimplementedGreeterServer()
 }
@@ -76,7 +78,7 @@ type UnimplementedGreeterServer struct {
 func (UnimplementedGreeterServer) GetTest(context.Context, *HelloRequest) (*HelloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTest not implemented")
 }
-func (UnimplementedGreeterServer) GetInt(context.Context, *IntRequest) (*wrapperspb.Int64Value, error) {
+func (UnimplementedGreeterServer) GetInt(context.Context, *IntRequest) (*httpbody.HttpBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInt not implemented")
 }
 func (UnimplementedGreeterServer) PostTest(context.Context, *HelloRequest) (*HelloResponse, error) {

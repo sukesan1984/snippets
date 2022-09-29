@@ -6,6 +6,7 @@ import (
 	"net"
 
 	pb "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb"
+	httpbodypb "google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -69,9 +70,13 @@ func (s *server) PostTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	}, nil
 }
 
-func (s *server) GetInt(ctx context.Context, in *pb.IntRequest) (*wrapperspb.Int64Value, error) {
-	return &wrapperspb.Int64Value{
-		Value: in.Value,
+func (s *server) GetInt(ctx context.Context, in *pb.IntRequest) (*httpbodypb.HttpBody, error) {
+	//func (s *server) GetInt(ctx context.Context, in *pb.IntRequest) (*wrapperspb.Int64Value, error) {
+	//func (s *server) GetInt(ctx context.Context, _ *pb.IntRequest) (*pb.IntResponse, error) {
+	return &httpbodypb.HttpBody{
+		//return &pb.IntResponse{
+		ContentType: "text/plain",
+		Data:        []byte{0x32},
 	}, nil
 }
 
