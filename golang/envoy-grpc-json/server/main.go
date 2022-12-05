@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
 	pb "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb"
 	httpbodypb "google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -21,6 +25,13 @@ type server struct {
 }
 
 func (s *server) GetTest(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
+	point := in.GetPoint()
+	if point != nil {
+		fmt.Println("point is not nil")
+		fmt.Printf("point is not nil: %d\n", point.GetValue())
+	} else {
+		fmt.Println("point is nil")
+	}
 	return &pb.HelloResponse{
 		Message: "Hello World",
 		Orders: []*pb.Order{
@@ -78,6 +89,21 @@ func (s *server) GetInt(ctx context.Context, in *pb.IntRequest) (*httpbodypb.Htt
 		ContentType: "text/plain",
 		Data:        []byte{0x32},
 	}, nil
+}
+
+func (s *server) TestPathParameter(ctx context.Context, in *pb.PathParameterRequest) (*pb.PathParameterResponse, error) {
+	return &pb.PathParameterResponse{
+		UserId: in.GetUserId(),
+		Limit:  in.GetLimit(),
+	}, nil
+}
+
+func (s *server) NotFoundTest(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.NotFound, "Not Found")
+}
+
+func (s *server) InternalTest(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Internal, "Internal")
 }
 
 func main() {

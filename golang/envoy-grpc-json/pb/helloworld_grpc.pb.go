@@ -8,6 +8,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -23,6 +24,9 @@ type GreeterClient interface {
 	//rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
 	GetInt(ctx context.Context, in *IntRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	PostTest(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
+	TestPathParameter(ctx context.Context, in *PathParameterRequest, opts ...grpc.CallOption) (*PathParameterResponse, error)
+	NotFoundTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	InternalTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type greeterClient struct {
@@ -60,6 +64,33 @@ func (c *greeterClient) PostTest(ctx context.Context, in *HelloRequest, opts ...
 	return out, nil
 }
 
+func (c *greeterClient) TestPathParameter(ctx context.Context, in *PathParameterRequest, opts ...grpc.CallOption) (*PathParameterResponse, error) {
+	out := new(PathParameterResponse)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/TestPathParameter", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *greeterClient) NotFoundTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/NotFoundTest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *greeterClient) InternalTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/InternalTest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServer is the server API for Greeter service.
 // All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
@@ -68,6 +99,9 @@ type GreeterServer interface {
 	//rpc GetInt(IntRequest) returns (google.protobuf.Int64Value) {
 	GetInt(context.Context, *IntRequest) (*httpbody.HttpBody, error)
 	PostTest(context.Context, *HelloRequest) (*HelloResponse, error)
+	TestPathParameter(context.Context, *PathParameterRequest) (*PathParameterResponse, error)
+	NotFoundTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	InternalTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	mustEmbedUnimplementedGreeterServer()
 }
 
@@ -83,6 +117,15 @@ func (UnimplementedGreeterServer) GetInt(context.Context, *IntRequest) (*httpbod
 }
 func (UnimplementedGreeterServer) PostTest(context.Context, *HelloRequest) (*HelloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostTest not implemented")
+}
+func (UnimplementedGreeterServer) TestPathParameter(context.Context, *PathParameterRequest) (*PathParameterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TestPathParameter not implemented")
+}
+func (UnimplementedGreeterServer) NotFoundTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NotFoundTest not implemented")
+}
+func (UnimplementedGreeterServer) InternalTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InternalTest not implemented")
 }
 func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
@@ -151,6 +194,60 @@ func _Greeter_PostTest_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Greeter_TestPathParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PathParameterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).TestPathParameter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/TestPathParameter",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).TestPathParameter(ctx, req.(*PathParameterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Greeter_NotFoundTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).NotFoundTest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/NotFoundTest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).NotFoundTest(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Greeter_InternalTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).InternalTest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/InternalTest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).InternalTest(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -169,6 +266,18 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostTest",
 			Handler:    _Greeter_PostTest_Handler,
+		},
+		{
+			MethodName: "TestPathParameter",
+			Handler:    _Greeter_TestPathParameter_Handler,
+		},
+		{
+			MethodName: "NotFoundTest",
+			Handler:    _Greeter_NotFoundTest_Handler,
+		},
+		{
+			MethodName: "InternalTest",
+			Handler:    _Greeter_InternalTest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
