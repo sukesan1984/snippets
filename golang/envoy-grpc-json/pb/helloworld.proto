@@ -47,6 +47,17 @@ service Greeter{
 	  get: "/internal"
 	};
   }
+
+  rpc TimeTest(google.protobuf.Empty) returns (TimeResponse) {
+  	option (google.api.http) = {
+	  get: "/time"
+	};
+  }
+  rpc HandleUndefinedParameter(HandleUndefinedParameterRequest) returns (HandleUndefinedParameterResponse) {
+	option (google.api.http) = {
+	  get: "/handle_undefined_parameter"
+    };
+  }
 }
 
 enum Code {
@@ -95,4 +106,19 @@ message Item {
   string id = 1;
   string name = 2;
   google.protobuf.DoubleValue price = 3;
+}
+
+message TimeResponse {
+  google.protobuf.Timestamp date = 1;
+}
+
+message HandleUndefinedParameterRequest {
+  int64 id = 1;
+  string name = 2;
+}
+
+message HandleUndefinedParameterResponse {
+  int64 id = 1;
+  string name = 2;
+  string unhandled_parameter = 3;
 }

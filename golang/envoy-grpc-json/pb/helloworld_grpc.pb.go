@@ -27,6 +27,8 @@ type GreeterClient interface {
 	TestPathParameter(ctx context.Context, in *PathParameterRequest, opts ...grpc.CallOption) (*PathParameterResponse, error)
 	NotFoundTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	InternalTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	TimeTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TimeResponse, error)
+	HandleUndefinedParameter(ctx context.Context, in *HandleUndefinedParameterRequest, opts ...grpc.CallOption) (*HandleUndefinedParameterResponse, error)
 }
 
 type greeterClient struct {
@@ -91,6 +93,24 @@ func (c *greeterClient) InternalTest(ctx context.Context, in *emptypb.Empty, opt
 	return out, nil
 }
 
+func (c *greeterClient) TimeTest(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TimeResponse, error) {
+	out := new(TimeResponse)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/TimeTest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *greeterClient) HandleUndefinedParameter(ctx context.Context, in *HandleUndefinedParameterRequest, opts ...grpc.CallOption) (*HandleUndefinedParameterResponse, error) {
+	out := new(HandleUndefinedParameterResponse)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/HandleUndefinedParameter", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServer is the server API for Greeter service.
 // All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
@@ -102,6 +122,8 @@ type GreeterServer interface {
 	TestPathParameter(context.Context, *PathParameterRequest) (*PathParameterResponse, error)
 	NotFoundTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	InternalTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	TimeTest(context.Context, *emptypb.Empty) (*TimeResponse, error)
+	HandleUndefinedParameter(context.Context, *HandleUndefinedParameterRequest) (*HandleUndefinedParameterResponse, error)
 	mustEmbedUnimplementedGreeterServer()
 }
 
@@ -126,6 +148,12 @@ func (UnimplementedGreeterServer) NotFoundTest(context.Context, *emptypb.Empty) 
 }
 func (UnimplementedGreeterServer) InternalTest(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InternalTest not implemented")
+}
+func (UnimplementedGreeterServer) TimeTest(context.Context, *emptypb.Empty) (*TimeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TimeTest not implemented")
+}
+func (UnimplementedGreeterServer) HandleUndefinedParameter(context.Context, *HandleUndefinedParameterRequest) (*HandleUndefinedParameterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HandleUndefinedParameter not implemented")
 }
 func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
@@ -248,6 +276,42 @@ func _Greeter_InternalTest_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Greeter_TimeTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).TimeTest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/TimeTest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).TimeTest(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Greeter_HandleUndefinedParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleUndefinedParameterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).HandleUndefinedParameter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/HandleUndefinedParameter",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).HandleUndefinedParameter(ctx, req.(*HandleUndefinedParameterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +342,14 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InternalTest",
 			Handler:    _Greeter_InternalTest_Handler,
+		},
+		{
+			MethodName: "TimeTest",
+			Handler:    _Greeter_TimeTest_Handler,
+		},
+		{
+			MethodName: "HandleUndefinedParameter",
+			Handler:    _Greeter_HandleUndefinedParameter_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 
 	pb "github.com/sukesan1984/snippets/golang/envoy-grpc-json/pb"
 	httpbodypb "google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -104,6 +107,47 @@ func (s *server) NotFoundTest(ctx context.Context, _ *emptypb.Empty) (*emptypb.E
 
 func (s *server) InternalTest(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Internal, "Internal")
+}
+
+func (s *server) TimeTest(ctx context.Context, _ *emptypb.Empty) (*pb.TimeResponse, error) {
+	return &pb.TimeResponse{
+		Date: timestamppb.Now(),
+	}, nil
+}
+
+func (s *server) HandleUndefinedParameter(ctx context.Context, req *pb.HandleUndefinedParameterRequest) (*pb.HandleUndefinedParameterResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Internal, "metadata not found")
+	}
+	fmt.Println(md)
+	originalPath := md.Get("x-envoy-original-path")
+	//urlStrings := md.Get(":authority")
+	//if len(urlStrings) == 0 {
+	//	return nil, status.Error(codes.Internal, "url not found")
+	//}
+	//fmt.Println(urlStrings)
+	if len(originalPath) == 0 {
+		return nil, status.Error(codes.Internal, "url not found")
+	}
+	fmt.Println(originalPath)
+
+	urlString := originalPath[0]
+	parsedUrl, err := url.Parse(urlString)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "url parse error")
+	}
+	queryParams := parsedUrl.Query()
+	fmt.Println(queryParams)
+
+	// query parameterにunhandled_parameterというキーがあれば取り出す。なければ、not foundというstringを入れる
+	unhandledParameter := queryParams.Get("unhandled_parameter")
+
+	return &pb.HandleUndefinedParameterResponse{
+		Id:                 req.GetId(),
+		Name:               req.GetName(),
+		UnhandledParameter: unhandledParameter,
+	}, nil
 }
 
 func main() {

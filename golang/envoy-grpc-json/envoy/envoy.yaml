@@ -33,6 +33,7 @@ static_resources:
                 always_print_primitive_fields: true
                 always_print_enums_as_ints: true
                 preserve_proto_field_names: false
+              ignore_unknown_query_parameters: true
           - name: envoy.router
 
   clusters:
