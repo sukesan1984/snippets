@@ -122,11 +122,6 @@ func (s *server) HandleUndefinedParameter(ctx context.Context, req *pb.HandleUnd
 	}
 	fmt.Println(md)
 	originalPath := md.Get("x-envoy-original-path")
-	//urlStrings := md.Get(":authority")
-	//if len(urlStrings) == 0 {
-	//	return nil, status.Error(codes.Internal, "url not found")
-	//}
-	//fmt.Println(urlStrings)
 	if len(originalPath) == 0 {
 		return nil, status.Error(codes.Internal, "url not found")
 	}
@@ -140,7 +135,6 @@ func (s *server) HandleUndefinedParameter(ctx context.Context, req *pb.HandleUnd
 	queryParams := parsedUrl.Query()
 	fmt.Println(queryParams)
 
-	// query parameterにunhandled_parameterというキーがあれば取り出す。なければ、not foundというstringを入れる
 	unhandledParameter := queryParams.Get("unhandled_parameter")
 
 	return &pb.HandleUndefinedParameterResponse{
