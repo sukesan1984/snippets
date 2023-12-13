@@ -1,4 +1,4 @@
-FROM golang:1.18.0-alpine
+FROM golang:1.21.0-alpine as builder
 
 RUN apk add --no-cache curl git go unzip musl-dev libc6-compat
 
@@ -9,10 +9,19 @@ RUN curl -sL https://github.com/google/protobuf/releases/download/v${PROTOBUF_VE
     cp -r /tmp/bin /tmp/include /usr/local/ && \
     rm -rf /tmp/*
 
+COPY . /src
+
 ENV GOPATH /go
 ENV PATH $PATH:$GOPATH/bin:/usr/local/go/bin
 
-#RUN go install google.golang.org/grpc@latest
-RUN go install github.com/golang/protobuf/protoc-gen-go@latest
-RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@latest
-RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@latest
+WORKDIR /src
+
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o /main /src/server/main.go
+RUN ls -la /main
+RUN cat /main
+
+FROM gcr.io/distroless/base-debian10
+
+COPY --from=builder /main /
+CMD ["/main"]

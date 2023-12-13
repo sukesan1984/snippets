@@ -12,8 +12,12 @@ static_resources:
     - filters:
       - name: envoy.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: grpc_json
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
           codec_type: AUTO
           route_config:
             name: local_route
@@ -25,7 +29,8 @@ static_resources:
                 route: { cluster: grpc, timeout: { seconds: 60 } }
           http_filters:
           - name: envoy.grpc_json_transcoder
-            config:
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
               proto_descriptor: "/etc/pb/helloworld.pb"
               services: ["helloworld.Greeter"]
               print_options:
@@ -35,6 +40,8 @@ static_resources:
                 preserve_proto_field_names: false
               ignore_unknown_query_parameters: true
           - name: envoy.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
   - name: grpc

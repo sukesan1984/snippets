@@ -1,9 +1,13 @@
 version: '3.7'
 services:
   server:
-    build: ./server
-    image: grpc-server:latest
+    #build: ./server
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+    #image: grpc-server:latest
     container_name: grpc-server
+    platform: linux/x86_64
     volumes:
       - './go.mod:/go/src/go.mod'
       - './go.sum:/go/src/go.sum'
@@ -12,16 +16,16 @@ services:
     expose:
       - 50051
     command:
-      - /go/src/server/bin/server
+      - '/main'
   envoy:
-    image: envoyproxy/envoy:v1.13.1
+    image: envoyproxy/envoy:dev
     volumes:
       - './envoy:/etc/envoy'
       - './pb:/etc/pb'
     expose:
-      - 51051
+      - 51052
     ports:
-      - 51051:51051
+      - 51052:51051
     links:
       - server
 volumes:
