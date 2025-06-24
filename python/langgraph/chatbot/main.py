@@ -5,11 +5,14 @@ from langchain.chat_models import init_chat_model
 from langchain.chat_models.base import BaseChatModel
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import Runnable, RunnableConfig
+from langchain_core.tools import tool
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.types import Command, interrupt
 from typing_extensions import TypedDict
 
 
@@ -49,6 +52,20 @@ class State(TypedDict):
     llm: BaseChatModel
 
 
+@tool
+def human_assistance(query: str) -> str:
+    """Request assistance from a human."""
+    human_response = interrupt({"query": query})
+    if human_response is None:
+        return "人間からの応答を待っています..."
+    if isinstance(human_response, dict) and "data" in human_response:
+        return human_response["data"]
+    elif isinstance(human_response, str):
+        return human_response
+    else:
+        return str(human_response)
+
+
 def route_tools(
     state: State,
 ):
@@ -67,7 +84,8 @@ def route_tools(
 
 def chatbot(state: State):
     llm = state.get("llm")
-    return {"messages": [llm.invoke(state["messages"])]}
+    message = llm.invoke(state["messages"])
+    return {"messages": [message]}
 
 
 def stream_graph_updates(
@@ -78,16 +96,29 @@ def stream_graph_updates(
         config,
         # stream_mode="values",
     ):
-        for value in event.values():
-            print("Assistant:", value["messages"][-1].content)
+        if "__interrupt__" in event:
+            # Handle interrupt
+            interrupt_data = event["__interrupt__"][0]
+            print("Human assistance requested:", interrupt_data.value["query"])
+            # Get human response
+            human_response = input("Your response: ")
+            # Resume with the response
+            for resume_event in graph.stream(Command(resume={"data": human_response}), config):
+                for value in resume_event.values():
+                    if "messages" in value and value["messages"]:
+                        print("Assistant:", value["messages"][-1].content)
+        else:
+            for value in event.values():
+                if "messages" in value and value["messages"]:
+                    print("Assistant:", value["messages"][-1].content)
 
 
 def main():
     memory = MemorySaver()
     tool = TavilySearch(max_results=2)
-    tools = [tool]
+    tools = [tool, human_assistance]
     tool.invoke("What's a 'node' in LangGraph?")
-    tool_node = BasicToolNode(tools=[tool])
+    tool_node = ToolNode(tools=tools)
     graph_builder = StateGraph(State)
     graph_builder.add_node("tools", tool_node)
     graph_builder.add_node("chatbot", chatbot)
@@ -95,8 +126,9 @@ def main():
     graph_builder.add_edge("tools", "chatbot")
     graph_builder.add_conditional_edges(
         "chatbot",
-        route_tools,
-        {"tools": "tools", END: END},
+        tools_condition,
+        # route_tools,
+        # {"tools": "tools", END: END},
     )
     graph = graph_builder.compile(checkpointer=memory)
     llm = init_chat_model("openai:gpt-4.1")
