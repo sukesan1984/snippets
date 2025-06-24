@@ -4,8 +4,9 @@ from typing import Annotated
 from langchain.chat_models import init_chat_model
 from langchain.chat_models.base import BaseChatModel
 from langchain_core.messages import ToolMessage
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_tavily import TavilySearch
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
@@ -69,15 +70,20 @@ def chatbot(state: State):
     return {"messages": [llm.invoke(state["messages"])]}
 
 
-def stream_graph_updates(graph: CompiledStateGraph, llm: Runnable, user_input: str):
+def stream_graph_updates(
+    graph: CompiledStateGraph, llm: Runnable, user_input: str, config: RunnableConfig
+):
     for event in graph.stream(
-        {"llm": llm, "messages": [{"role": "user", "content": user_input}]}
+        {"llm": llm, "messages": [{"role": "user", "content": user_input}]},
+        config,
+        # stream_mode="values",
     ):
         for value in event.values():
             print("Assistant:", value["messages"][-1].content)
 
 
 def main():
+    memory = MemorySaver()
     tool = TavilySearch(max_results=2)
     tools = [tool]
     tool.invoke("What's a 'node' in LangGraph?")
@@ -92,20 +98,21 @@ def main():
         route_tools,
         {"tools": "tools", END: END},
     )
-    graph = graph_builder.compile()
+    graph = graph_builder.compile(checkpointer=memory)
     llm = init_chat_model("openai:gpt-4.1")
     llm_with_tools = llm.bind_tools(tools)
+    config = RunnableConfig({"configurable": {"thread_id": "1"}})
     while True:
         try:
             user_input = input("User: ")
             if user_input.lower() in ["quit", "exit", "q"]:
                 print("Goodbye!")
                 break
-            stream_graph_updates(graph, llm_with_tools, user_input)
+            stream_graph_updates(graph, llm_with_tools, user_input, config)
         except:
             user_input = "LangGraphの何が知りたいですか"
             print("User: " + user_input)
-            stream_graph_updates(graph, llm_with_tools, user_input)
+            stream_graph_updates(graph, llm_with_tools, user_input, config)
             break
 
 
