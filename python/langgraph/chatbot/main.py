@@ -6,7 +6,7 @@ from langchain.chat_models.base import BaseChatModel
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import Runnable
 from langchain_tavily import TavilySearch
-from langgraph.graph import START, StateGraph
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
 from typing_extensions import TypedDict
@@ -19,6 +19,7 @@ class BasicToolNode:
         self.tools_by_name = {tool.name: tool for tool in tools}
 
     def __call__(self, inputs: dict):
+        print("BasicToolNode.__call__")
         if messages := inputs.get("messages", []):
             message = messages[-1]
         else:
@@ -47,6 +48,22 @@ class State(TypedDict):
     llm: BaseChatModel
 
 
+def route_tools(
+    state: State,
+):
+    """
+    Use in the conditional_edge to route to the ToolNode if the last message
+    has tool calls. Otherwise, route to the end.
+    """
+    messages = state["messages"]
+    last_message = messages[-1]
+    # If the last message has tool calls, then we route to the "tools" node
+
+    if last_message.tool_calls:
+        return "tools"
+    return END
+
+
 def chatbot(state: State):
     llm = state.get("llm")
     return {"messages": [llm.invoke(state["messages"])]}
@@ -69,6 +86,12 @@ def main():
     graph_builder.add_node("tools", tool_node)
     graph_builder.add_node("chatbot", chatbot)
     graph_builder.add_edge(START, "chatbot")
+    graph_builder.add_edge("tools", "chatbot")
+    graph_builder.add_conditional_edges(
+        "chatbot",
+        route_tools,
+        {"tools": "tools", END: END},
+    )
     graph = graph_builder.compile()
     llm = init_chat_model("openai:gpt-4.1")
     llm_with_tools = llm.bind_tools(tools)
