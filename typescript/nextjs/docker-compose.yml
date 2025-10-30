@@ -1,44 +1,134 @@
 version: '3.8'
 
 services:
-  backend:
+  # 1. Express Backend (ポート3001)
+  backend-express:
     build:
-      context: ./backend
+      context: ./backend-express
       dockerfile: Dockerfile
-    container_name: backend
+      target: deps
+    container_name: backend-express-dev
     ports:
       - "3001:3001"
     environment:
       - NODE_ENV=development
       - PORT=3001
     volumes:
-      - ./backend/src:/app/src
-      - ./backend/package.json:/app/package.json
-      - ./backend/tsconfig.json:/app/tsconfig.json
+      - ./backend-express:/app
+      - /app/node_modules
+    working_dir: /app
     command: npm run dev
     networks:
       - app-network
 
+  # 2. tRPC + Hono Backend (ポート3003)
+  backend-trpc-hono:
+    build:
+      context: ./backend-trpc-hono
+      dockerfile: Dockerfile
+      target: deps
+    container_name: backend-trpc-hono-dev
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+    volumes:
+      - ./backend-trpc-hono:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  # 3. tRPC + Fastify Backend (ポート3006)
+  backend-trpc-fastify:
+    build:
+      context: ./backend-trpc-fastify
+      dockerfile: Dockerfile
+      target: deps
+    container_name: backend-trpc-fastify-dev
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+    volumes:
+      - ./backend-trpc-fastify:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  # 4. Next.js専用Backend (ポート3004)
+  backend-nextjs:
+    build:
+      context: ./backend-nextjs
+      dockerfile: Dockerfile
+      target: deps
+    container_name: backend-nextjs-dev
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+    volumes:
+      - ./backend-nextjs:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  # 5. Frontend as Backend (同一コード別プロセス、ポート3005)
+  frontend-as-backend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    container_name: frontend-as-backend-dev
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://backend-express:3001
+      - SERVICE_MODE=backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  # 6. メインのFrontend (ポート3002)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
+      target: deps
+    container_name: frontend-main-dev
     ports:
       - "3002:3000"
     environment:
       - NODE_ENV=development
-      - API_URL=http://backend:3001
+      - API_URL=http://backend-express:3001
+      - NEXT_PUBLIC_TRPC_URL=http://localhost:3003/trpc
     volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/package.json:/app/package.json
-      - ./frontend/tsconfig.json:/app/tsconfig.json
-      - ./frontend/next.config.js:/app/next.config.js
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
     command: npm run dev
     depends_on:
-      - backend
+      - backend-express
+      - backend-trpc-hono
+      - backend-trpc-fastify
+      - backend-nextjs
+      - frontend-as-backend
     networks:
       - app-network
 
