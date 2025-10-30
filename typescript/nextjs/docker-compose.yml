@@ -1,6 +1,44 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+      POSTGRES_DB: prisma_demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prisma"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Prisma Migration Service
+  prisma-migrate:
+    image: node:20-alpine
+    container_name: prisma-migrate
+    working_dir: /app
+    volumes:
+      - ./shared/prisma:/app
+    environment:
+      - DATABASE_URL=postgresql://prisma:prisma@postgres:5432/prisma_demo?schema=public
+    command: sh -c "npm install && npm run migrate && npm run generate"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    profiles:
+      - migration
   # 1. Express Backend (ポート3001)
   backend-express:
     build:
@@ -13,11 +51,15 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
+      - DATABASE_URL=postgresql://prisma:prisma@postgres:5432/prisma_demo?schema=public
     volumes:
       - ./backend-express:/app
+      - ./shared:/app/shared
       - /app/node_modules
     working_dir: /app
     command: npm run dev
+    depends_on:
+      - postgres
     networks:
       - app-network
 
@@ -33,11 +75,15 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3003
+      - DATABASE_URL=postgresql://prisma:prisma@postgres:5432/prisma_demo?schema=public
     volumes:
       - ./backend-trpc-hono:/app
       - /app/node_modules
+      - ./shared/prisma:/app/node_modules/@shared/prisma
     working_dir: /app
     command: npm run dev
+    depends_on:
+      - postgres
     networks:
       - app-network
 
@@ -135,3 +181,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:

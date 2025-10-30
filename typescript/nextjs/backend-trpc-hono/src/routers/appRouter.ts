@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../trpc';
+import { prisma } from '@shared/prisma';
 
 export const appRouter = router({
   health: publicProcedure.query(() => {
@@ -43,15 +44,25 @@ export const appRouter = router({
       name: z.string().min(1),
       email: z.string().email(),
     }))
-    .mutation(({ input }) => {
-      const id = Math.random().toString(36).substring(7);
-      return {
-        id,
-        name: input.name,
-        email: input.email,
-        createdAt: new Date().toISOString(),
-      };
+    .mutation(async ({ input }) => {
+      const user = await prisma.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+        },
+      });
+      return user;
     }),
+
+  // Prismaを使ったユーザー取得
+  getUsersFromDB: publicProcedure.query(async () => {
+    const users = await prisma.user.findMany({
+      include: {
+        posts: true,
+      },
+    });
+    return users;
+  }),
 });
 
 export type AppRouter = typeof appRouter;

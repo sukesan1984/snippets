@@ -1,5 +1,8 @@
 FROM node:20-alpine AS base
 
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 FROM base AS deps

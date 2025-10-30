@@ -1,0 +1,24 @@
+{
+  "name": "@shared/prisma",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset --force",
+    "studio": "prisma studio",
+    "db:seed": "tsx src/seed.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prisma": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}

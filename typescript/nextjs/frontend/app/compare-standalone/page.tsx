@@ -14,6 +14,10 @@ export default function CompareStandalonePage() {
   const [sameCodeTrpcResponse, setSameCodeTrpcResponse] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
+  // Prisma Users
+  const [restApiUsersResponse, setRestApiUsersResponse] = useState<string>('');
+  const [trpcUsersResponse, setTrpcUsersResponse] = useState<string>('');
+
   // 共通スタイル
   const cardStyle = {
     border: '1px solid #e0e0e0', 
@@ -59,6 +63,33 @@ export default function CompareStandalonePage() {
     padding: '0.5rem',
     borderRadius: '4px',
     border: '1px solid #ddd'
+  };
+
+  // Fetch users from Express with Prisma
+  const fetchUsersFromRestAPI = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/users');
+      const data = await response.json();
+      setRestApiUsersResponse(JSON.stringify(data, null, 2));
+    } catch (error) {
+      setRestApiUsersResponse(`Error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch users from tRPC + Hono with Prisma
+  const fetchUsersFromTRPC = async () => {
+    setLoading(true);
+    try {
+      const result = await trpcHono.getUsersFromDB.query();
+      setTrpcUsersResponse(JSON.stringify(result, null, 2));
+    } catch (error) {
+      setTrpcUsersResponse(`Error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // REST API calls to Express backend
@@ -473,6 +504,46 @@ export default function CompareStandalonePage() {
               {trpcFastifyResponse}
             </pre>
           )}
+        </div>
+      </div>
+
+      {/* Prisma Data Test Section */}
+      <div style={{ marginTop: '3rem', padding: '1.5rem', background: '#e8f4fd', borderRadius: '8px' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Prisma Database Test</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+          <div style={cardStyle}>
+            <h4 style={titleStyle}>Express + Prisma Users</h4>
+            <p style={descStyle}>
+              PostgreSQL経由でユーザーデータ取得
+            </p>
+            <div style={buttonContainerStyle}>
+              <button className="button" onClick={fetchUsersFromRestAPI} disabled={loading} style={buttonStyle}>
+                Fetch Users
+              </button>
+            </div>
+            {restApiUsersResponse && (
+              <pre className="apiResponse" style={responseStyle}>
+                {restApiUsersResponse}
+              </pre>
+            )}
+          </div>
+          
+          <div style={cardStyle}>
+            <h4 style={titleStyle}>tRPC + Hono + Prisma Users</h4>
+            <p style={descStyle}>
+              tRPCクライアント経由でユーザーデータ取得（型安全）
+            </p>
+            <div style={buttonContainerStyle}>
+              <button className="button" onClick={fetchUsersFromTRPC} disabled={loading} style={buttonStyle}>
+                Fetch Users
+              </button>
+            </div>
+            {trpcUsersResponse && (
+              <pre className="apiResponse" style={responseStyle}>
+                {trpcUsersResponse}
+              </pre>
+            )}
+          </div>
         </div>
       </div>
 
