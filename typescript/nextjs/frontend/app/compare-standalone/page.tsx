@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trpcHono, trpcFastify } from '../../lib/trpc';
 
 export default function CompareStandalonePage() {
   const [restApiResponse, setRestApiResponse] = useState<string>('');
@@ -44,18 +45,12 @@ export default function CompareStandalonePage() {
     }
   };
 
-  // Direct tRPC calls to tRPC backend
+  // tRPC + Hono calls using tRPC client
   const fetchFromTRPC = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3003/trpc/hello', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
-      setTrpcResponse(JSON.stringify(data.result.data, null, 2));
+      const result = await trpcHono.hello.query();
+      setTrpcResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       setTrpcResponse(`Error: ${error}`);
     } finally {
@@ -66,19 +61,10 @@ export default function CompareStandalonePage() {
   const testTRPCEcho = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3003/trpc/echo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            message: 'Hello from Frontend via tRPC!',
-          },
-        }),
+      const result = await trpcHono.echo.mutate({
+        message: 'Hello from Frontend via tRPC Hono Client!',
       });
-      const data = await response.json();
-      setTrpcResponse(JSON.stringify(data.result.data, null, 2));
+      setTrpcResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       setTrpcResponse(`Error: ${error}`);
     } finally {
@@ -86,18 +72,12 @@ export default function CompareStandalonePage() {
     }
   };
 
-  // tRPC + Fastify calls
+  // tRPC + Fastify calls using tRPC client
   const fetchFromTRPCFastify = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3006/trpc/hello', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
-      setTrpcFastifyResponse(JSON.stringify(data.result.data, null, 2));
+      const result = await trpcFastify.hello.query();
+      setTrpcFastifyResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       setTrpcFastifyResponse(`Error: ${error}`);
     } finally {
@@ -108,19 +88,10 @@ export default function CompareStandalonePage() {
   const testTRPCFastifyEcho = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3006/trpc/echo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            message: 'Hello from Frontend via tRPC Fastify!',
-          },
-        }),
+      const result = await trpcFastify.echo.mutate({
+        message: 'Hello from Frontend via tRPC Fastify Client!',
       });
-      const data = await response.json();
-      setTrpcFastifyResponse(JSON.stringify(data.result.data, null, 2));
+      setTrpcFastifyResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       setTrpcFastifyResponse(`Error: ${error}`);
     } finally {
@@ -318,7 +289,7 @@ export default function CompareStandalonePage() {
         <div>
           <h2 style={{ fontSize: '1.25rem' }}>tRPC + Hono</h2>
           <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            別プロセス・ポート3003
+            別プロセス・ポート3003・tRPCクライアント使用
           </p>
           <div>
             <button className="button" onClick={fetchFromTRPC} disabled={loading} style={{ marginBottom: '0.5rem', width: '100%' }}>
@@ -338,7 +309,7 @@ export default function CompareStandalonePage() {
         <div>
           <h2 style={{ fontSize: '1.25rem' }}>tRPC + Fastify</h2>
           <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            別プロセス・ポート3006
+            別プロセス・ポート3006・tRPCクライアント使用
           </p>
           <div>
             <button className="button" onClick={fetchFromTRPCFastify} disabled={loading} style={{ marginBottom: '0.5rem', width: '100%' }}>
