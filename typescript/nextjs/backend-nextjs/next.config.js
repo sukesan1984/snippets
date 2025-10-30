@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  // API専用のため、静的ファイルやページは無効化
+  poweredByHeader: false,
+  // CORSを有効化
   async headers() {
     return [
       {
@@ -12,12 +15,6 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
         ],
       },
-    ];
-  },
-  rewrites: async () => {
-    return [
-      // Next.js API Routesのみリライト設定から除外
-      // Express等の外部APIには直接アクセスするよう変更
     ];
   },
 };

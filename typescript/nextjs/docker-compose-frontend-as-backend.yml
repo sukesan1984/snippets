@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # フロントエンドアプリをバックエンド専用として別ポートで起動
+  frontend-as-backend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    container_name: frontend-as-backend-dev
+    ports:
+      - "3005:3000"  # ポート3005で公開
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://backend:3001  # 必要に応じて
+      # APIモードとして動作することを示す環境変数（オプション）
+      - SERVICE_MODE=backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - app-network
+
+  # 通常のフロントエンド
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    container_name: frontend-main-dev
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://backend:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    command: npm run dev
+    depends_on:
+      - frontend-as-backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

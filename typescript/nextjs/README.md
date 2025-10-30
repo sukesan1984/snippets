@@ -9,8 +9,11 @@ Frontend と Backend を分離した Next.js + TypeScript のスケルトンア�
 - **Docker**: Frontend/Backend別々のコンテナで構成
 
 ### バックエンドの選択肢
-1. **Express版**: REST API (ポート3001)
-2. **tRPC + Hono版**: 型安全なRPC (ポート3003)
+1. **Next.js API Routes (同一プロセス)**: フロントエンドと一体型 (ポート3002)
+2. **Next.js Backend (専用インスタンス)**: API専用のNext.jsアプリ (ポート3004)
+3. **同一コード別プロセス**: frontendアプリを別プロセスで起動 (ポート3005)
+4. **Express版**: REST API (ポート3001)
+5. **tRPC + Hono版**: 型安全なRPC (ポート3003)
 
 ## セットアップ
 
@@ -23,6 +26,24 @@ docker-compose -f docker-compose.dev.yml up --build
 
 # バックグラウンドで起動する場合
 docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+#### Next.js Backend 版（専用インスタンス）
+```bash
+# Next.js Backend版の開発環境起動
+docker-compose -f docker-compose-nextjs.yml up --build
+
+# バックグラウンドで起動する場合
+docker-compose -f docker-compose-nextjs.yml up -d --build
+```
+
+#### 同一コード別プロセス版
+```bash
+# frontendアプリを別プロセスでバックエンドとして起動
+docker-compose -f docker-compose-frontend-as-backend.yml up --build
+
+# バックグラウンドで起動する場合
+docker-compose -f docker-compose-frontend-as-backend.yml up -d --build
 ```
 
 #### tRPC + Hono バックエンド版
@@ -60,13 +81,25 @@ npm run dev
 - Frontend: http://localhost:3002
 - Backend API (Express): http://localhost:3001
 - Backend API (tRPC + Hono): http://localhost:3003
+- Backend API (Next.js Separate): http://localhost:3004
 - 比較ページ: http://localhost:3002/compare-standalone
 
 ## APIエンドポイント
 
+### Next.js API Routes (ポート3002)
+- `GET /api/nextjs/health` - ヘルスチェック
+- `GET /api/nextjs/hello` - サンプルメッセージ取得
+- `POST /api/nextjs/echo` - メッセージをエコー
+
+### Express REST API (ポート3001)
 - `GET /api/health` - ヘルスチェック
 - `GET /api/hello` - サンプルメッセージ取得
 - `POST /api/echo` - メッセージをエコー
+
+### tRPC + Hono (ポート3003)
+- `/trpc/health` - ヘルスチェック
+- `/trpc/hello` - サンプルメッセージ取得
+- `/trpc/echo` - メッセージをエコー
 
 ## スクリプト
 
