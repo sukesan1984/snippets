@@ -8,11 +8,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
-    "@shared/prisma": "file:../shared/prisma",
+    "@shared/prisma": "workspace:*",
     "cors": "^2.8.5",
     "express": "^4.21.1"
   },

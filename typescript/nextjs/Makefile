@@ -1,4 +1,4 @@
-.PHONY: help up down status logs clean install build
+.PHONY: help up down status logs clean install build prisma-migrate prisma-studio
 
 # デフォルトターゲット
 help:
@@ -8,8 +8,10 @@ help:
 	@echo "  make status             - 起動中のコンテナを表示"
 	@echo "  make logs               - すべてのログを表示"
 	@echo "  make clean              - すべてを停止して削除"
-	@echo "  make install            - 依存関係をインストール"
+	@echo "  make install            - 依存関係をインストール (pnpm)"
 	@echo "  make build              - Dockerイメージをビルド"
+	@echo "  make prisma-migrate     - Prismaマイグレーション実行"
+	@echo "  make prisma-studio      - Prisma Studioを起動"
 
 # すべてのバックエンドを起動
 up:
@@ -52,15 +54,22 @@ clean:
 	docker-compose down -v --remove-orphans
 	@echo "✅ クリーンアップ完了"
 
-# 依存関係のインストール
+# 依存関係のインストール（pnpm workspace）
 install:
-	@echo "📦 依存関係をインストール中..."
-	cd frontend && npm install
-	cd backend-express && npm install
-	cd backend-trpc-hono && npm install
-	cd backend-trpc-fastify && npm install
-	cd backend-nextjs && npm install
+	@echo "📦 依存関係をインストール中 (pnpm)..."
+	pnpm install
 	@echo "✅ インストール完了"
+
+# Prismaマイグレーション実行
+prisma-migrate:
+	@echo "🗃️  Prismaマイグレーション実行中..."
+	docker-compose --profile migration up prisma-migrate
+	@echo "✅ マイグレーション完了"
+
+# Prisma Studio起動
+prisma-studio:
+	@echo "🎨 Prisma Studioを起動中..."
+	pnpm --filter @shared/prisma studio
 
 # ビルドのみ
 build:

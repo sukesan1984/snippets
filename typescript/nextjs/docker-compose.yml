@@ -31,7 +31,7 @@ services:
       - ./shared/prisma:/app
     environment:
       - DATABASE_URL=postgresql://prisma:prisma@postgres:5432/prisma_demo?schema=public
-    command: sh -c "npm install && npm run migrate && npm run generate"
+    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm run migrate && pnpm run generate"
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
       - ./shared:/app/shared
       - /app/node_modules
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     depends_on:
       - postgres
     networks:
@@ -81,7 +81,7 @@ services:
       - /app/node_modules
       - ./shared/prisma:/app/node_modules/@shared/prisma
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     depends_on:
       - postgres
     networks:
@@ -103,7 +103,7 @@ services:
       - ./backend-trpc-fastify:/app
       - /app/node_modules
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     networks:
       - app-network
 
@@ -124,7 +124,7 @@ services:
       - /app/node_modules
       - /app/.next
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     networks:
       - app-network
 
@@ -146,7 +146,7 @@ services:
       - /app/node_modules
       - /app/.next
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     networks:
       - app-network
 
@@ -168,7 +168,7 @@ services:
       - /app/node_modules
       - /app/.next
     working_dir: /app
-    command: npm run dev
+    command: sh -c "corepack enable && pnpm run dev"
     depends_on:
       - backend-express
       - backend-trpc-hono

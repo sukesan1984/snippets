@@ -1,0 +1,22 @@
+{
+  "name": "nextjs-backend-comparison",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js + TypeScript backend pattern comparison project",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "build": "pnpm run --recursive build",
+    "start": "pnpm run --parallel start",
+    "lint": "pnpm run --recursive lint",
+    "type-check": "pnpm run --recursive type-check",
+    "clean": "pnpm run --recursive clean && rm -rf node_modules/.pnpm",
+    "prisma:migrate": "pnpm --filter @shared/prisma migrate",
+    "prisma:generate": "pnpm --filter @shared/prisma generate",
+    "prisma:studio": "pnpm --filter @shared/prisma studio"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

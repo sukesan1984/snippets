@@ -8,12 +8,13 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@hono/trpc-server": "^0.3.2",
-    "@shared/prisma": "file:../shared/prisma",
+    "@shared/prisma": "workspace:*",
     "@trpc/server": "^10.45.2",
     "hono": "^4.6.12",
     "superjson": "^2.2.1",

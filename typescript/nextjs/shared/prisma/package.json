@@ -11,6 +11,7 @@
     "migrate:reset": "prisma migrate reset --force",
     "studio": "prisma studio",
     "db:seed": "tsx src/seed.ts",
+    "clean": "rm -rf dist node_modules",
     "postinstall": "prisma generate"
   },
   "dependencies": {
